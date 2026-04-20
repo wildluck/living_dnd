@@ -65,9 +65,13 @@ Watch weather evolve in real time - stomrs form and spread, seasons shift, tempe
 
 ## Sample output
 
-- **Weather** 
-- **World map & roads**
-- **Kingdom map**
+- **Weather** <img width="994" height="1105" alt="image" src="https://github.com/user-attachments/assets/231da9d9-a3cd-4656-a51f-71a5b47c3830" />
+
+- **World map & roads** <img width="994" height="1105" alt="image" src="https://github.com/user-attachments/assets/2ca28332-277b-4aa5-b5cf-8a14b9cb1ad4" />
+
+- **Kingdom map** <img width="1005" height="1076" alt="image" src="https://github.com/user-attachments/assets/3ce40e93-6c41-4d1d-82d9-e1ac19de865c" />
+
+- **Climate map**  <img width="1012" height="1103" alt="image" src="https://github.com/user-attachments/assets/18e91b71-8d80-4bcd-956c-7ac11dac4708" />
 
 ---
 
