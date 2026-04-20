@@ -1,9 +1,8 @@
 #include "world_clock.hpp"
+#include "common.hpp"
 
 #include <cassert>
 #include <print>
-
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 void initial_state() {
     WorldClock clock;
@@ -50,13 +49,13 @@ void full_year_seasons() {
     clock.tick(); /* day 91 */
     assert(clock.current().season == Season::Summer);
 
-    for (int i = 0; i < 89; ++i) clock.tick(); // day 180
+    for (int i = 0; i < 89; ++i) clock.tick(); /* day 180 */
     assert(clock.current().season == Season::Summer);
 
     clock.tick(); /* day 181 */
     assert(clock.current().season == Season::Autumn);
 
-    for (int i = 0; i < 89; ++i) clock.tick(); // day 270
+    for (int i = 0; i < 89; ++i) clock.tick(); /* day 270 */
     assert(clock.current().season == Season::Autumn);
 
     clock.tick(); /* day 271 */
@@ -98,7 +97,7 @@ void reset_test() {
 
 void multi_year_consistency() {
     WorldClock clock;
-    for (int i = 0; i < 3600; ++i) clock.tick(); // 10 years
+    for (int i = 0; i < 3600; ++i) clock.tick(); /* 10 years */
     auto t = clock.current();
     assert(t.day == 1);
     assert(t.year == 11);
@@ -107,6 +106,7 @@ void multi_year_consistency() {
 
 int main() {
     std::print("\n---------------- WorldClock Tests ----------------\n\n");
+
     RUN(initial_state);
     RUN(tick_advances_day);
     RUN(season_changes);
@@ -117,6 +117,7 @@ int main() {
     RUN(on_year_change_callback);
     RUN(reset_test);
     RUN(multi_year_consistency);
+
     std::print("\n---------------- All tests passed! ----------------\n\n");
     return 0;
 }

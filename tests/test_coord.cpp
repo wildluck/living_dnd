@@ -1,10 +1,9 @@
 #include "hex/coord.hpp"
+#include "common.hpp"
 
 #include <unordered_set>
 #include <cassert>
 #include <print>
-
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 using namespace lwe::hex;
 
@@ -184,7 +183,7 @@ void line_consecutive() {
 
 void wedge_basic() {
     auto w = Coord(0,0).wedge(Direction::East, 2);
-    assert(static_cast<int>(w.size()) == 5); // dist1:2 + dist2:3
+    assert(static_cast<int>(w.size()) == 5); /* dist1:2 + dist2:3 */
     for (auto& h : w) {
         assert(Coord(0,0).distance_to(h) >= 1);
         assert(Coord(0,0).distance_to(h) <= 2);

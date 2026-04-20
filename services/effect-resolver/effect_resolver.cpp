@@ -78,7 +78,7 @@ void EffectResolver::check_temperature(std::vector<HexEffect>& effects, const He
 
 /* Precipitation effects */
 void EffectResolver::check_precipitation(std::vector<HexEffect>& effects, const HexWeather& weather) const {
-    if (weather.is_stormy) return;  // Storm check handles heavy precipitation
+    if (weather.is_stormy) return;  /* Storm check handles heavy precipitation */
 
     if (weather.precipitation > 0.8) {
         effects.push_back({
@@ -114,7 +114,7 @@ void EffectResolver::check_precipitation(std::vector<HexEffect>& effects, const 
 
 /* Wind effects */
 void EffectResolver::check_wind(std::vector<HexEffect>& effects, const HexWeather& weather) const {
-    if (weather.is_stormy) return;  // Storm check handles high winds
+    if (weather.is_stormy) return;  /* Storm check handles high winds */
 
     if (weather.wind_speed > 0.9) {
         effects.push_back({
@@ -146,7 +146,7 @@ void EffectResolver::check_storm(std::vector<HexEffect>& effects, const HexWeath
     if (!weather.is_stormy) return;
 
     if (weather.temperature < 0) {
-        // Blizzard
+        /* Blizzard */
         effects.push_back({
             "Blizzard",
             "A wall of white. Snow and ice lash exposed skin. Navigation is nearly impossible.",
@@ -162,7 +162,7 @@ void EffectResolver::check_storm(std::vector<HexEffect>& effects, const HexWeath
             }
         });
     } else if (weather.temperature > 30) {
-        // Sandstorm / heat storm
+        /* Sandstorm / heat storm */
         effects.push_back({
             "Sandstorm",
             "Searing wind carries stinging sand that scours exposed flesh.",
@@ -176,7 +176,7 @@ void EffectResolver::check_storm(std::vector<HexEffect>& effects, const HexWeath
             }
         });
     } else {
-        // Thunderstorm
+        /* Thunderstorm */
         effects.push_back({
             "Thunderstorm",
             "Lightning splits the sky. Thunder shakes the ground. Rain falls in sheets.",
@@ -314,7 +314,7 @@ void EffectResolver::check_season(std::vector<HexEffect>& effects, const HexData
             break;
 
         case Season::Summer:
-            // Long days
+            /* Long days */
             effects.push_back({
                 "Long Days",
                 "The sun lingers long, granting extra hours of daylight for travel.",

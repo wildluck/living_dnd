@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/libs
+  ${CMAKE_SOURCE_DIR}/libs/display
   ${CMAKE_SOURCE_DIR}/services/world-gen
   ${CMAKE_SOURCE_DIR}/services/world-clock
   ${CMAKE_SOURCE_DIR}/services/weather-engine
@@ -27,6 +28,10 @@ target_include_directories(dice INTERFACE ${CMAKE_SOURCE_DIR}/libs)
 add_library(common INTERFACE)
 target_include_directories(common INTERFACE ${CMAKE_SOURCE_DIR}/libs)
 target_link_libraries(common INTERFACE hex)
+
+add_library(display INTERFACE)
+target_include_directories(display INTERFACE ${CMAKE_SOURCE_DIR}/libs)
+target_link_libraries(display INTERFACE common weather_engine effect_resolver)
 
 # ---------------- Services ---------------- #
 add_library(world_gen

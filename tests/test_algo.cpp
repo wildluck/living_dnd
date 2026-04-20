@@ -1,12 +1,12 @@
 #include "hex/algorithms.hpp"
+#include "common.hpp"
+#include "hex/coord.hpp"
 
 #include <cassert>
 #include <print>
 #include <unordered_set>
 
 using namespace lwe::hex;
-
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 /* ---------------- A* ---------------- */
 void astar_same_start_goal() {
@@ -231,7 +231,7 @@ void wff_variable_cost() {
 void wff_impassable() {
     auto result = weighted_flood_fill(Coord(0, 0),
         [](const Coord&, const Coord&) { return -1.0; }, 100.0);
-    // Only origin reachable
+    /* Only origin reachable */
     assert(result.size() == 1);
     assert(result[Coord(0, 0)] == 0.0);
 }

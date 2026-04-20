@@ -1,5 +1,6 @@
 #include "hex/grid.hpp"
 #include "hex/coord.hpp"
+#include "common.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -7,8 +8,6 @@
 #include <unordered_set>
 #include <cassert>
 #include <print>
-
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 using namespace lwe::hex;
 

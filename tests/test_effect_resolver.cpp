@@ -1,14 +1,14 @@
 #include "effect_resolver.hpp"
 #include "world_gen.hpp"
+#include "display/display.hpp"
+#include "common.hpp"
 
 #include <cassert>
 #include <print>
 #include <algorithm>
 
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
-
-const uint64_t WORLD_SEED = 500;
-const int WORLD_RADIUS = 40;
+using namespace lwe::hex;
+using namespace lwe::display;
 
 static WorldData make_test_world() {
     WorldConfig cfg;
@@ -42,8 +42,8 @@ void extreme_cold_triggers() {
     w.is_stormy = false;
 
     /* Find any land hex */
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -62,8 +62,8 @@ void freezing_triggers() {
     w.wind_speed = 0.3;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -81,8 +81,8 @@ void extreme_heat_triggers() {
     w.wind_speed = 0.2;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -100,9 +100,9 @@ void mild_weather_no_temperature_effects() {
     w.wind_speed = 0.2;
     w.is_stormy = false;
 
-    lwe::hex::Coord grassland;
+    Coord grassland;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Grassland) { grassland = c; found = true; }
     });
     assert(found);
@@ -124,8 +124,8 @@ void downpour_triggers() {
     w.wind_speed = 0.3;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -142,8 +142,8 @@ void heavy_rain_triggers() {
     w.wind_speed = 0.3;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -161,8 +161,8 @@ void gale_triggers() {
     w.wind_speed = 0.95;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -180,8 +180,8 @@ void strong_wind_triggers() {
     w.wind_speed = 0.75;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -199,8 +199,8 @@ void thunderstorm_triggers() {
     w.wind_speed = 0.8;
     w.is_stormy = true;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -217,8 +217,8 @@ void blizzard_triggers() {
     w.wind_speed = 0.8;
     w.is_stormy = true;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -235,13 +235,13 @@ void sandstorm_triggers() {
     w.wind_speed = 0.9;
     w.is_stormy = true;
 
-    lwe::hex::Coord desert;
+    Coord desert;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Desert) { desert = c; found = true; }
     });
 
-    if (!found) return; // skip if no desert
+    if (!found) return; /* skip if no desert */
 
     Tick tick = { 135, 1, Season::Summer, 45 };
     auto effects = resolver.resolve(desert, w, tick);
@@ -256,8 +256,8 @@ void storm_skips_rain_and_wind_checks() {
     w.wind_speed = 0.95;
     w.is_stormy = true;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -278,9 +278,9 @@ void swamp_has_difficult_terrain() {
     w.wind_speed = 0.1;
     w.is_stormy = false;
 
-    lwe::hex::Coord swamp;
+    Coord swamp;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Swamp) { swamp = c; found = true; }
     });
 
@@ -300,9 +300,9 @@ void jungle_has_effects() {
     w.wind_speed = 0.1;
     w.is_stormy = false;
 
-    lwe::hex::Coord jungle;
+    Coord jungle;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Jungle) { jungle = c; found = true; }
     });
 
@@ -324,9 +324,9 @@ void river_crossing_triggers() {
     w.wind_speed = 0.2;
     w.is_stormy = false;
 
-    lwe::hex::Coord river;
+    Coord river;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.has_river) { river = c; found = true; }
     });
 
@@ -345,9 +345,9 @@ void raging_river_in_storm() {
     w.wind_speed = 0.7;
     w.is_stormy = true;
 
-    lwe::hex::Coord river;
+    Coord river;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.has_river) { river = c; found = true; }
     });
 
@@ -367,9 +367,9 @@ void peak_altitude_sickness() {
     w.wind_speed = 0.5;
     w.is_stormy = false;
 
-    lwe::hex::Coord peak;
+    Coord peak;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Peak) { peak = c; found = true; }
     });
 
@@ -389,9 +389,9 @@ void spring_foraging_bonus() {
     w.wind_speed = 0.2;
     w.is_stormy = false;
 
-    lwe::hex::Coord grass;
+    Coord grass;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Grassland) { grass = c; found = true; }
     });
 
@@ -410,8 +410,8 @@ void summer_long_days() {
     w.wind_speed = 0.2;
     w.is_stormy = false;
 
-    lwe::hex::Coord land;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    Coord land;
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome != Biome::Ocean) land = c;
     });
 
@@ -428,9 +428,9 @@ void winter_short_days() {
     w.wind_speed = 0.3;
     w.is_stormy = false;
 
-    lwe::hex::Coord temperate;
+    Coord temperate;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.climate == ClimateZone::Temperate) { temperate = c; found = true; }
     });
 
@@ -450,9 +450,9 @@ void ocean_no_effects() {
     w.wind_speed = 0.5;
     w.is_stormy = true;
 
-    lwe::hex::Coord ocean;
+    Coord ocean;
     bool found = false;
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (!found && hex.biome == Biome::Ocean) { ocean = c; found = true; }
     });
 
@@ -460,55 +460,6 @@ void ocean_no_effects() {
     Tick tick = { 45, 1, Season::Spring, 45 };
     auto effects = resolver.resolve(ocean, w, tick);
     assert(effects.empty());
-}
-
-/* ---------------- Print effects for a hex (visual demo) ---------------- */
-void print_hex_effects(const WorldData& world, const EffectResolver& resolver,
-                       const WeatherEngine& engine, const lwe::hex::Coord& coord, const Tick& tick)
-{
-    auto opt = world.grid.get(coord);
-    if (!opt) return;
-    const auto& hex = opt->get();
-    const auto& w = engine.get(coord);
-    auto effects = resolver.resolve(coord, w, tick);
-
-    const char* biome_names[] = {
-        "Ocean", "Coast", "Desert", "Grassland", "Forest", "Jungle", "Swamp",
-        "Hills", "Mountain", "Peak", "AlpineForest", "CloudForest", "Beach", "Cliff"
-    };
-
-    std::print("\n  Hex ({},{}) {}\n", coord.q, coord.r, biome_names[static_cast<int>(hex.biome)]);
-    std::print("  Weather: {:.2f}°C, precip={:.2f}, wind={:.2f}{}\n",
-        w.temperature,
-        w.precipitation,
-        w.wind_speed,
-        (w.is_stormy ? " [STORM]" : "")
-    );
-
-    if (effects.empty()) {
-        std::print("  No active effects.\n");
-        return;
-    }
-
-    std::print("  Active effects ({}):\n", effects.size());
-    for (const auto& effect : effects) {
-        std::print("    \033[33m{}\033[0m - {}\n", effect.name, effect.desctiption);
-        for (const auto& mod : effect.mods) {
-            std::print("      ");
-            switch (mod.type) {
-                case ModType::SkillCheck:       std::print("[Skill]"); break;
-                case ModType::AttackRoll:       std::print("[Attack]"); break;
-                case ModType::MovementSpeed:    std::print("[Speed]"); break;
-                case ModType::Damage:           std::print("[Damage]"); break;
-                case ModType::SavingThrow:      std::print("[Save]"); break;
-                case ModType::Visibility:       std::print("[Vision]"); break;
-                case ModType::DifficultTerrain: std::print("[Terrain]"); break;
-            }
-            std::print(" ");
-            if (mod.modifier > 0) std::print("+");
-            std::print("{} - {}\n", mod.modifier, mod.detail);
-        }
-    }
 }
 
 /* ---------------- Main ---------------- */
@@ -550,7 +501,7 @@ int main() {
     engine.update(winter);
 
     std::print("\nWinter (Day 315):\n");
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome == Biome::Peak) {
             print_hex_effects(test_world, resolver, engine, c, winter);
         }
@@ -566,7 +517,7 @@ int main() {
     engine.update(summer);
 
     std::print("/nSummer (Day 135):\n");
-    test_world.grid.for_each([&](const lwe::hex::Coord& c, const HexData& hex) {
+    test_world.grid.for_each([&](const Coord& c, const HexData& hex) {
         if (hex.biome == Biome::Desert) {
             static int desert_count = 0;
             if (desert_count++ == 0)

@@ -1,4 +1,5 @@
 #include "noise/fbm.hpp"
+#include "common.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -7,8 +8,6 @@
 #include <vector>
 
 using namespace lwe::noise;
-
-#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 /* ---------------- SimplexNoise ---------------- */
 void simplex_deterministic() {

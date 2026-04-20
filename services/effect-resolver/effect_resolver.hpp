@@ -25,7 +25,7 @@ struct MechanicMod {
 
 struct HexEffect {
     std::string name; /* "Blizzard", "Scorching Heat" */
-    std::string desctiption; /* DM-facing flovar text */
+    std::string description; /* DM-facing flovar text */
     std::vector<MechanicMod> mods;
 };
 
