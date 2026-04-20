@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -10,6 +11,17 @@
 #include <vector>
 
 namespace lwe::hex {
+
+enum class Direction : uint8_t {
+    NorthEast = 0,
+    East,
+    SouthEast,
+    SouthWest,
+    West,
+    NorthWest,
+
+    DirectionCount = 6,
+};
 
 /* ---------------- Hex grid (cubic) coordinates (pointy-top) ---------------- */
 struct Coord {
@@ -58,18 +70,8 @@ struct Coord {
     }
 
     /* ---------------- Neighbors ---------------- */
-    enum class Direction : uint8_t {
-        NorthEast = 0,
-        East,
-        SouthEast,
-        SouthWest,
-        West,
-        NorthWest,
 
-        DirectionCount = 6,
-    };
-
-    template <typename F>
+    template <typename F> requires std::invocable<F, Direction>
     static constexpr void for_each_direction(F&& fn) {
         for (uint8_t i = 0; i < static_cast<uint8_t>(Direction::DirectionCount); ++i)
             fn(static_cast<Direction>(i));
@@ -92,14 +94,11 @@ struct Coord {
     }
 
     [[nodiscard]] constexpr std::array<Coord, 6> neighbors() const noexcept {
-        return {
-            neighbor(Direction::NorthEast),
-            neighbor(Direction::East),
-            neighbor(Direction::SouthEast),
-            neighbor(Direction::SouthWest),
-            neighbor(Direction::West),
-            neighbor(Direction::NorthWest),
-        };
+        std::array<Coord, 6> result{};
+        for_each_direction([&](Direction dir) {
+            result[static_cast<uint8_t>(dir)] = neighbor(dir);
+        });
+        return result;
     }
 
     [[nodiscard]] Direction direction_between(const Coord& o) const noexcept {

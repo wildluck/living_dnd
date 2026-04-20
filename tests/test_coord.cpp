@@ -1,14 +1,12 @@
-#include "coord.hpp"
+#include "hex/coord.hpp"
 
-#include <cassert>
-#include <iostream>
 #include <unordered_set>
+#include <cassert>
+#include <print>
+
+#define RUN(name) do { std::print("  " #name "... "); name(); std::print("OK\n"); } while (0)
 
 using namespace lwe::hex;
-
-using Dir = Coord::Direction;
-
-#define RUN(name) do { std::cout << "  " #name "... "; name(); std::cout << "OK\n"; } while(0)
 
 void cube_invariant() {
     Coord c(3, -7);
@@ -62,16 +60,16 @@ void neighbors_unique() {
 
 void direction_between_cardinal() {
     Coord o(0,0);
-    assert(o.direction_between(Coord(1,0))  == Dir::East);
-    assert(o.direction_between(Coord(-1,0)) == Dir::West);
-    assert(o.direction_between(Coord(0,1))  == Dir::SouthEast);
-    assert(o.direction_between(Coord(0,-1)) == Dir::NorthWest);
-    assert(o.direction_between(Coord(1,-1)) == Dir::NorthEast);
-    assert(o.direction_between(Coord(-1,1)) == Dir::SouthWest);
+    assert(o.direction_between(Coord(1,0))  == Direction::East);
+    assert(o.direction_between(Coord(-1,0)) == Direction::West);
+    assert(o.direction_between(Coord(0,1))  == Direction::SouthEast);
+    assert(o.direction_between(Coord(0,-1)) == Direction::NorthWest);
+    assert(o.direction_between(Coord(1,-1)) == Direction::NorthEast);
+    assert(o.direction_between(Coord(-1,1)) == Direction::SouthWest);
 }
 
 void direction_between_self() {
-    assert(Coord(5,3).direction_between(Coord(5,3)) == Dir::DirectionCount);
+    assert(Coord(5,3).direction_between(Coord(5,3)) == Direction::DirectionCount);
 }
 
 void ring_0() {
@@ -185,7 +183,7 @@ void line_consecutive() {
 }
 
 void wedge_basic() {
-    auto w = Coord(0,0).wedge(Dir::East, 2);
+    auto w = Coord(0,0).wedge(Direction::East, 2);
     assert(static_cast<int>(w.size()) == 5); // dist1:2 + dist2:3
     for (auto& h : w) {
         assert(Coord(0,0).distance_to(h) >= 1);
@@ -194,27 +192,27 @@ void wedge_basic() {
 }
 
 void wedge_within_radius() {
-    for (auto& h : Coord(0,0).wedge(Dir::NorthEast, 4))
+    for (auto& h : Coord(0,0).wedge(Direction::NorthEast, 4))
         assert(Coord(0,0).distance_to(h) <= 4);
 }
 
 void cone_contains_wedge() {
-    auto w = Coord(0,0).wedge(Dir::East, 3);
-    auto c = Coord(0,0).cone(Dir::East, 3, 1);
+    auto w = Coord(0,0).wedge(Direction::East, 3);
+    auto c = Coord(0,0).cone(Direction::East, 3, 1);
     std::unordered_set<Coord> cs(c.begin(), c.end());
     for (auto& h : w) assert(cs.count(h) > 0);
 }
 
 void cone_spread_0_eq_wedge() {
-    auto w = Coord(0,0).wedge(Dir::East, 3);
-    auto c = Coord(0,0).cone(Dir::East, 3, 0);
+    auto w = Coord(0,0).wedge(Direction::East, 3);
+    auto c = Coord(0,0).cone(Direction::East, 3, 0);
     std::sort(w.begin(), w.end());
     assert(c.size() == w.size());
     for (size_t i = 0; i < c.size(); ++i) assert(c[i] == w[i]);
 }
 
 void cone_no_dupes() {
-    auto c = Coord(0,0).cone(Dir::East, 3, 2);
+    auto c = Coord(0,0).cone(Direction::East, 3, 2);
     std::unordered_set<Coord> s(c.begin(), c.end());
     assert(s.size() == c.size());
 }
@@ -249,27 +247,49 @@ void hash_test() {
 }
 
 int main() {
-    std::cout << "\n=== Coord Tests ===\n\n";
+    std::print("\n ---------------- Coord Tests ---------------- \n\n");
 
-    RUN(cube_invariant); RUN(arithmetic);
-    RUN(distance_to_self); RUN(distance_to_neighbor);
-    RUN(distance_symmetric); RUN(distance_known); RUN(length_test);
-    RUN(neighbors_count); RUN(neighbors_all_dist_1); RUN(neighbors_unique);
-    RUN(direction_between_cardinal); RUN(direction_between_self);
-    RUN(ring_0); RUN(ring_1); RUN(ring_n_size);
-    RUN(ring_correct_distance); RUN(ring_no_dupes); RUN(hex_count_test);
-    RUN(within_radius_count); RUN(within_radius_distances);
-    RUN(within_radius_no_dupes); RUN(within_radius_off_center);
-    RUN(rotate_cw_6); RUN(rotate_ccw_6);
-    RUN(rotate_inverse); RUN(rotate_preserves_distance);
-    RUN(line_to_self); RUN(line_length);
-    RUN(line_endpoints); RUN(line_consecutive);
-    RUN(wedge_basic); RUN(wedge_within_radius);
-    RUN(cone_contains_wedge); RUN(cone_spread_0_eq_wedge); RUN(cone_no_dupes);
-    RUN(pixel_roundtrip); RUN(pixel_origin);
-    RUN(cube_round_exact); RUN(cube_round_invariant);
+    RUN(cube_invariant);
+    RUN(arithmetic);
+    RUN(distance_to_self);
+    RUN(distance_to_neighbor);
+    RUN(distance_symmetric);
+    RUN(distance_known);
+    RUN(length_test);
+    RUN(neighbors_count);
+    RUN(neighbors_all_dist_1);
+    RUN(neighbors_unique);
+    RUN(direction_between_cardinal);
+    RUN(direction_between_self);
+    RUN(ring_0);
+    RUN(ring_1);
+    RUN(ring_n_size);
+    RUN(ring_correct_distance);
+    RUN(ring_no_dupes);
+    RUN(hex_count_test);
+    RUN(within_radius_count);
+    RUN(within_radius_distances);
+    RUN(within_radius_no_dupes);
+    RUN(within_radius_off_center);
+    RUN(rotate_cw_6);
+    RUN(rotate_ccw_6);
+    RUN(rotate_inverse);
+    RUN(rotate_preserves_distance);
+    RUN(line_to_self);
+    RUN(line_length);
+    RUN(line_endpoints);
+    RUN(line_consecutive);
+    RUN(wedge_basic);
+    RUN(wedge_within_radius);
+    RUN(cone_contains_wedge);
+    RUN(cone_spread_0_eq_wedge);
+    RUN(cone_no_dupes);
+    RUN(pixel_roundtrip);
+    RUN(pixel_origin);
+    RUN(cube_round_exact);
+    RUN(cube_round_invariant);
     RUN(hash_test);
 
-    std::cout << "\nAll tests passed!\n";
+    std::print("\n ---------------- All Tests passed! ---------------- \n");
     return 0;
 }
