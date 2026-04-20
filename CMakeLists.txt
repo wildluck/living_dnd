@@ -13,6 +13,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/services/world-clock
   ${CMAKE_SOURCE_DIR}/services/weather-engine
   ${CMAKE_SOURCE_DIR}/services/effect-resolver
+  ${CMAKE_SOURCE_DIR}/services/state-machine
 )
 
 # ---------------- Libraries (header-only) ---------------- #
@@ -52,6 +53,9 @@ add_library(effect_resolver
 )
 target_link_libraries(effect_resolver PUBLIC common weather_engine world_clock)
 
+add_library(state_machine services/state-machine/state_machine.cpp)
+target_link_libraries(state_machine PUBLIC common weather_engine dice)
+
 # ---------------- Tests ---------------- #
 enable_testing()
 
@@ -87,10 +91,14 @@ add_executable(test_effect_resolver tests/test_effect_resolver.cpp)
 target_link_libraries(test_effect_resolver effect_resolver weather_engine world_gen)
 add_test(NAME test_effect_resolver COMMAND test_effect_resolver)
 
+add_executable(test_state_machine tests/test_state_machine.cpp)
+target_link_libraries(test_state_machine state_machine weather_engine world_gen)
+add_test(NAME test_state_machine COMMAND test_state_machine)
+
 # ---------------- Live simulation --------------- #
 add_executable(live_sim src/live_sim.cpp)
-target_link_libraries(live_sim world_gen weather_engine)
+target_link_libraries(live_sim world_gen weather_engine state_machine)
 
 # ---------------- Main ---------------- #
 add_executable(living_dnd src/main.cpp)
-target_link_libraries(living_dnd world_gen weather_engine effect_resolver)
+target_link_libraries(living_dnd world_gen weather_engine effect_resolver state_machine)
