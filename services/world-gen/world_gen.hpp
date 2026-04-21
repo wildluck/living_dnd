@@ -9,7 +9,7 @@ struct WorldConfig {
     uint64_t seed = 42;
     int radius = 40;                   /* 40 = ~4921 hexes */
     double sea_level = 0.35;           /* elevation threshold (default 0.35) */
-    double mountain_level = 0.8;       /* elecation threashold (default 0.80) */
+    double mountain_level = 0.8;       /* elevation threshold (default 0.80) */
     double moisture_frequency = 0.03;  /* noise scale (default 0.03) */
     double elevation_frequency = 0.02; /* noise scale (default 0.02) */
     int num_kingdoms = 4;              /* target (default 4) */

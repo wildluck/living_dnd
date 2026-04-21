@@ -14,6 +14,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/services/weather-engine
   ${CMAKE_SOURCE_DIR}/services/effect-resolver
   ${CMAKE_SOURCE_DIR}/services/state-machine
+  ${CMAKE_SOURCE_DIR}/services/cascade
 )
 
 # ---------------- Libraries (header-only) ---------------- #
@@ -56,6 +57,9 @@ target_link_libraries(effect_resolver PUBLIC common weather_engine world_clock)
 add_library(state_machine services/state-machine/state_machine.cpp)
 target_link_libraries(state_machine PUBLIC common weather_engine dice)
 
+add_library(cascade services/cascade/cascade.cpp)
+target_link_libraries(cascade PUBLIC common weather_engine state_machine dice)
+
 # ---------------- Tests ---------------- #
 enable_testing()
 
@@ -94,6 +98,10 @@ add_test(NAME test_effect_resolver COMMAND test_effect_resolver)
 add_executable(test_state_machine tests/test_state_machine.cpp)
 target_link_libraries(test_state_machine state_machine weather_engine world_gen)
 add_test(NAME test_state_machine COMMAND test_state_machine)
+
+add_executable(test_cascade tests/test_cascade.cpp)
+target_link_libraries(test_cascade cascade weather_engine state_machine world_gen)
+add_test(NAME test_cascade COMMAND test_cascade)
 
 # ---------------- Live simulation --------------- #
 add_executable(live_sim src/live_sim.cpp)

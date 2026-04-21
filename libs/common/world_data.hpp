@@ -22,7 +22,7 @@ struct HexData {
     std::optional<int> kingdom_id;
     bool is_border;
     bool has_river;
-    std::optional<lwe::hex::Direction> river_flor_dir;
+    std::optional<lwe::hex::Direction> river_flow_dir;
     std::vector<Resource> resources;
     /* More needed data to be added soon */
 };

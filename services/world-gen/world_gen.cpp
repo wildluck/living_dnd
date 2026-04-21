@@ -155,7 +155,7 @@ void WorldGenerator::generate_rivers() {
             if (opt && opt->get().biome != Biome::Ocean) {
                 opt->get().has_river = true;
                 opt->get().terrain = Terrain::River;
-                opt->get().river_flor_dir = flow_dirs[coord];
+                opt->get().river_flow_dir = flow_dirs[coord];
                 world_.rivers.push_back({coord, coord, static_cast<float>(count)});
             }
         }
@@ -294,7 +294,7 @@ void WorldGenerator::build_roads() {
         if (hex.terrain == Terrain::River) {
             auto from_opt = world_.grid.get(from);
             if (from_opt && from_opt->get().terrain == Terrain::River) {
-                auto flow = from_opt->get().river_flor_dir;
+                auto flow = from_opt->get().river_flow_dir;
                 if (flow.has_value()) {
                     auto flow_target = from.neighbor(*flow);
                     if (flow_target == to) return 0.5; /* Downstream */
