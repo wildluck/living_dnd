@@ -1,8 +1,8 @@
 #pragma once
 
 #include "common/world_data.hpp"
+#include "common/event.hpp"
 #include "weather_engine.hpp"
-#include "state_machine.hpp"
 #include "hex/coord.hpp"
 
 #include <string>
@@ -47,17 +47,17 @@ private:
     std::vector<CascadeEffect> effects_;
     std::vector<WorldEvent> events_;
 
-    void emit(const Tick& tick, const std::string& msg);
+    void emit(const Tick& tick, const EventPayload& payload);
 
-    /* Event handlers - parse event message and create appropriate cascade */
-    void on_raid(const WorldEvent& event, const Tick& tick);
-    void on_starvation(const WorldEvent& event, const Tick& tick);
-    void on_war(const WorldEvent& event, const Tick& tick);
-    void on_promotion(const WorldEvent& event, const Tick& tick);
-    void on_storm_damage(const WorldEvent& event, const Tick& tick);
+    /* Event handlers - one per variant arm */
+    void on_raid_occurred(const RaidOccurred& raid, const Tick& tick);
+    void on_raid_repelled(const RaidRepelled& raid, const Tick& tick);
+    void on_starvation(const Starvation& starvation, const Tick& tick);
+    void on_war(const WarDeclared& declaration, const Tick& tick);
+    void on_promotion(const SettlementPromoted& promotion, const Tick& tick);
+    void on_storm_damage(const StormDamage& storm, const Tick& tick);
 
-    /* Hlelpers */
-    int find_settlement_by_name(const std::string& name_fragment) const;
+    /* Helpers */
     double intensity_at(const lwe::hex::Coord& origin, const lwe::hex::Coord& target,
                         int radius, double base_intensity) const;
 };

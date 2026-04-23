@@ -1,3 +1,4 @@
+#include "common/event_describer.hpp"
 #include "state_machine.hpp"
 #include "world_gen.hpp"
 #include "display/display.hpp"
@@ -5,6 +6,8 @@
 
 #include <cassert>
 #include <print>
+#include <string>
+#include <variant>
 
 static WorldData make_test_world() {
     WorldConfig cfg;
@@ -191,8 +194,8 @@ void pois_can_raid_settlements() {
             sm.update(tick);
 
             for (const auto& ev : sm.events()) {
-                if (ev.message.find("raid") != std::string::npos ||
-                    ev.message.find("repelled") != std::string::npos) {
+                if (std::holds_alternative<RaidOccurred>(ev.payload)
+                    || std::holds_alternative<RaidRepelled>(ev.payload)) {
                     found_raid = true;
                 }
             }
@@ -307,7 +310,7 @@ void run_demo() {
 
             /* Print significant events */
             for (const auto& ev : sm.events()) {
-                std::print("  [Y{} D{}] {}\n", ev.tick_year, ev.tick_day, ev.message);
+                std::print("{}\n", describe(ev, world));
             }
             sm.clear_events();
         }

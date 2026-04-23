@@ -4,13 +4,13 @@
 #include "weather_engine.hpp"
 
 #include <algorithm>
-#include <format>
+#include <cstdlib>
 
 StateMachine::StateMachine(WorldData& world, const WeatherEngine& weather, uint64_t seed)
     : world_(world), weather_(weather), rng_(seed) {}
 
-void StateMachine::emit(const Tick& tick, const std::string& msg) {
-    events_.push_back({ tick.day, tick.year, msg });
+void StateMachine::emit(const Tick& tick, const EventPayload& payload) {
+    events_.push_back({ tick, payload });
 }
 
 void StateMachine::update(const Tick& tick) {
@@ -54,8 +54,7 @@ void StateMachine::update_settlements(const Tick& tick) {
             if (rng_.rand_bool(0.1)) {
                 int casualties = rng_.rand_int(1, settlement.population / 100 + 1);
                 settlement.population = std::max(10, settlement.population - casualties);
-                emit(tick, std::format("{} suffered storm damage, {} casualties",
-                    settlement.name, casualties));
+                emit(tick, StormDamage{ settlement.id, casualties });
             }
         }
 
@@ -98,11 +97,7 @@ void StateMachine::update_settlements(const Tick& tick) {
         else settlement.type = SettlementType::Hamlet;
 
         if (settlement.type != old_type) {
-            emit(tick, std::format("{} has grown into a {}!",
-                settlement.name,
-                settlement.type == SettlementType::City ? "City" :
-                settlement.type == SettlementType::Town ? "Town" :
-                settlement.type == SettlementType::Village ? "Village" : "Hamlet"));
+            emit(tick, SettlementPromoted{ settlement.id, old_type, settlement.type });
         }
 
         /* Garrison scale with population */
@@ -138,7 +133,7 @@ void StateMachine::update_resources(const Tick& tick) {
                 int starved = settlement.population / 500;
                 settlement.population = std::max(10, settlement.population - starved);
                 if (starved > 0) {
-                    emit(tick, std::format("{} is starving! {} people lost", settlement.name, starved));
+                    emit(tick, Starvation{ settlement.id, starved });
                 }
             }
         }
@@ -217,13 +212,8 @@ void StateMachine::update_kingdoms(const Tick& tick) {
                 score += event_val;
                 mirror += event_val;
 
-                if (event_val > 5) {
-                    emit(tick, std::format("{} and {} strengthen diplomatic ties",
-                        world_.kingdoms[i].name, world_.kingdoms[j].name));
-                } else if (event_val < -5) {
-                    emit(tick, std::format("Tensions rise between {} and {}",
-                        world_.kingdoms[i].name, world_.kingdoms[j].name));
-                }
+                if (std::abs(event_val) > 5)
+                    emit(tick, DiplomaticShift{ world_.kingdoms[i].id, world_.kingdoms[j].id, event_val });
             }
 
             /* Clamp */
@@ -233,16 +223,14 @@ void StateMachine::update_kingdoms(const Tick& tick) {
             /* War declaration */
             if (score < -80) {
                 if (rng_.rand_bool(0.02)) {
-                    emit(tick, std::format("WAR! {} declares war on {}!",
-                        world_.kingdoms[i].name, world_.kingdoms[j].name));
+                    emit(tick, WarDeclared{ world_.kingdoms[i].id, world_.kingdoms[j].id });
                 }
             }
 
             /* Alliance formation */
             if (score > 80) {
                 if (rng_.rand_bool(0.02)) {
-                    emit(tick, std::format("{} and {} form an alliance!",
-                        world_.kingdoms[i].name, world_.kingdoms[j].name));
+                    emit(tick, AllianceFormed{ world_.kingdoms[i].id, world_.kingdoms[j].id });
                 }
             }
         }
@@ -284,11 +272,10 @@ void StateMachine::update_roads(const Tick& tick) {
         }
     });
 
-    for (const auto& c : decayed_roads) {
-        auto& hex = world_.grid.at(c);
+    for (const auto& coord : decayed_roads) {
+        auto& hex = world_.grid.at(coord);
         hex.terrain = Terrain::Land;
-        emit(tick, std::format("Road at ({},{}) has fallen into disrepair",
-            c.q, c.r));
+        emit(tick, RoadDecayed{ coord });
     }
 }
 
@@ -359,15 +346,13 @@ void StateMachine::update_pois(const Tick& tick) {
                 case POIType::Shrine:       poi_type = "cultists from the shrine"; break;
             }
 
-            emit(tick, std::format("{} was raided by {}! {} casualties, {} food stolen",
-                nearest->name, poi_type, casualties, stolen_food));
+            emit(tick, RaidOccurred{ nearest->id, poi.id, poi.type, casualties, stolen_food });
         } else {
             /* Failed raid — garrison held */
             int garrison_loss = rng_.rand_int(0, raid_strength / 3 + 1);
             nearest->garrison = std::max(0, nearest->garrison - garrison_loss);
 
-            emit(tick, std::format("{}'s garrison repelled a raid from {} (lost {} guards)",
-                nearest->name, poi.name, garrison_loss));
+            emit(tick, RaidRepelled{ nearest->id, poi.id, garrison_loss });
         }
     }
 }
