@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common/types.hpp"
-#include "hex/coord.hpp"
+#include "types.hpp"
+#include "coord.hpp"
 #include "world_clock.hpp"
 
 #include <variant>

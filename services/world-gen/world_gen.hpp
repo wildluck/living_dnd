@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common/world_data.hpp"
-#include "dice/dice.hpp"
+#include "world_data.hpp"
+#include "dice.hpp"
 
 #include <cstdint>
 

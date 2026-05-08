@@ -1,6 +1,6 @@
 #include "world_gen.hpp"
-#include "noise/fbm.hpp"
-#include "hex/algorithms.hpp"
+#include "fbm.hpp"
+#include "algorithms.hpp"
 
 #include <algorithm>
 #include <cstdlib>

@@ -1,5 +1,5 @@
 #include "world_gen.hpp"
-#include "display/display.hpp"
+#include "display.hpp"
 #include "common.hpp"
 
 #include <chrono>

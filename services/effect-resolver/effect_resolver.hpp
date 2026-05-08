@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/world_data.hpp"
+#include "world_data.hpp"
 #include "weather_engine.hpp"
 #include "world_clock.hpp"
 

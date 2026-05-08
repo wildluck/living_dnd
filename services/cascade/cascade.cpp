@@ -1,6 +1,6 @@
 #include "cascade.hpp"
-#include "common/event.hpp"
-#include "common/world_data.hpp"
+#include "event.hpp"
+#include "world_data.hpp"
 
 #include <variant>
 #include <vector>

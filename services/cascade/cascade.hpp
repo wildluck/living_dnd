@@ -1,9 +1,9 @@
 #pragma once
 
-#include "common/world_data.hpp"
-#include "common/event.hpp"
+#include "world_data.hpp"
+#include "event.hpp"
 #include "weather_engine.hpp"
-#include "hex/coord.hpp"
+#include "coord.hpp"
 
 #include <string>
 #include <vector>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "hex/coord.hpp"
-#include "hex/grid.hpp"
-#include "common/types.hpp"
+#include "coord.hpp"
+#include "grid.hpp"
+#include "types.hpp"
 
 #include <cstdint>
 #include <optional>

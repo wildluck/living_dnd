@@ -1,6 +1,6 @@
-#include "hex/algorithms.hpp"
+#include "algorithms.hpp"
 #include "common.hpp"
-#include "hex/coord.hpp"
+#include "coord.hpp"
 
 #include <cassert>
 #include <print>

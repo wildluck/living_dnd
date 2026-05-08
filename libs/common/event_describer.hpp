@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/event.hpp"
-#include "common/types.hpp"
-#include "common/world_data.hpp"
+#include "event.hpp"
+#include "types.hpp"
+#include "world_data.hpp"
 
 #include <format>
 #include <string>

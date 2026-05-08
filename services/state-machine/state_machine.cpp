@@ -1,6 +1,6 @@
 #include "state_machine.hpp"
-#include "common/types.hpp"
-#include "common/world_data.hpp"
+#include "types.hpp"
+#include "world_data.hpp"
 #include "weather_engine.hpp"
 
 #include <algorithm>

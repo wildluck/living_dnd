@@ -1,12 +1,11 @@
-#include "common/event_describer.hpp"
+#include "event_describer.hpp"
 #include "state_machine.hpp"
 #include "world_gen.hpp"
-#include "display/display.hpp"
+#include "display.hpp"
 #include "common.hpp"
 
 #include <cassert>
 #include <print>
-#include <string>
 #include <variant>
 
 static WorldData make_test_world() {

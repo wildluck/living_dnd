@@ -1,11 +1,11 @@
 #include "cascade.hpp"
-#include "common/event.hpp"
-#include "common/event_describer.hpp"
-#include "common/types.hpp"
+#include "event.hpp"
+#include "event_describer.hpp"
+#include "types.hpp"
 #include "state_machine.hpp"
 #include "world_gen.hpp"
 #include "common.hpp"
-#include "display/display.hpp"
+#include "display.hpp"
 
 #include <cassert>
 #include <print>

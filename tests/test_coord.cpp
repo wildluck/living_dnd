@@ -1,4 +1,4 @@
-#include "hex/coord.hpp"
+#include "coord.hpp"
 #include "common.hpp"
 
 #include <unordered_set>

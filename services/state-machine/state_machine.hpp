@@ -1,7 +1,8 @@
 #pragma once
 
-#include "common/world_data.hpp"
-#include "common/event.hpp"
+#include "world_data.hpp"
+#include "event.hpp"
+#include "dice.hpp"
 #include "weather_engine.hpp"
 #include "world_clock.hpp"
 

@@ -1,4 +1,4 @@
-#include "noise/fbm.hpp"
+#include "fbm.hpp"
 #include "common.hpp"
 
 #include <cassert>
