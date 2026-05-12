@@ -1,5 +1,5 @@
-#include "hex/grid.hpp"
-#include "hex/coord.hpp"
+#include "grid.hpp"
+#include "coord.hpp"
 #include "common.hpp"
 
 #include <cassert>

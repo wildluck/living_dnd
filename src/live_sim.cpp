@@ -1,6 +1,7 @@
 #include "world_gen.hpp"
 #include "world_clock.hpp"
 #include "weather_engine.hpp"
+#include "display.hpp"
 
 #include <print>
 #include <thread>
@@ -14,16 +15,6 @@ void signal_handler(int) { running = false; }
 
 void clear_screen() { std::print("\033[2J\033[H"); }
 
-const char* season_name(Season s) {
-    switch (s) {
-        case Season::Spring: return "Spring";
-        case Season::Summer: return "Summer";
-        case Season::Autumn: return "Autumn";
-        case Season::Winter: return "Winter";
-    }
-    return "?";
-}
-
 void render(const WorldData& world, const WeatherEngine& engine, const Tick& tick) {
     clear_screen();
 
@@ -32,7 +23,7 @@ void render(const WorldData& world, const WeatherEngine& engine, const Tick& tic
     /* Header */
     std::print("\033[1m Living World Engine \033[0m");
     std::print("  Year {} | {} | Day {}/90 (total day {}) [Ctrl+C to quit]\n\n",
-        tick.year, season_name(tick.season), tick.day_of_season, tick.day);
+        tick.year, lwe::display::season_name(tick.season), tick.day_of_season, tick.day);
 
 
     /* Map */

@@ -1,49 +1,34 @@
 #include "cascade.hpp"
+#include "event.hpp"
+#include "world_data.hpp"
 
+#include <variant>
 #include <vector>
 
 CascadeEngine::CascadeEngine(WorldData& world, const WeatherEngine& weather, uint64_t seed)
     : world_(world), weather_(weather), rng_(seed) {}
 
-void CascadeEngine::emit(const Tick& tick, const std::string& msg) {
-    events_.push_back({ tick.day, tick.year, msg });
+void CascadeEngine::emit(const Tick& tick, const EventPayload& payload) {
+    events_.push_back({ tick, payload });
 }
 
 /* ---------------- Event processing ---------------- */
 void CascadeEngine::process_events(const std::vector<WorldEvent>& events, const Tick& tick) {
-    for (const auto& event : events) {
-        if (event.message.find("raided") != std::string::npos ||
-            event.message.find("raid") != std::string::npos) {
-            on_raid(event, tick);
-        }
-        if (event.message.find("starving") != std::string::npos) {
-            on_starvation(event, tick);
-        }
-        if (event.message.find("WAR") != std::string::npos) {
-            on_war(event, tick);
-        }
-        if (event.message.find("grown into") != std::string::npos) {
-            on_promotion(event, tick);
-        }
-        if (event.message.find("storm damage") != std::string::npos) {
-            on_storm_damage(event, tick);
-        }
+    for (const auto& e : events) {
+        std::visit(overloaded{
+            [&](const RaidOccurred& r) { on_raid_occurred(r, tick); },
+            [&](const RaidRepelled& r) { on_raid_repelled(r, tick); },
+            [&](const Starvation& s) { on_starvation(s, tick); },
+            [&](const WarDeclared& w) { on_war(w, tick); },
+            [&](const SettlementPromoted& p) { on_promotion(p, tick); },
+            [&](const StormDamage& d) { on_storm_damage(d, tick); },
+            [&](const auto&) { /* ignore */ },
+        }, e.payload);
     }
 }
 
-void CascadeEngine::on_raid(const WorldEvent& event, const Tick& tick) {
-    /* Extract settlement name — message format: "X was raided by..." */
-    auto pos = event.message.find(" was raided");
-    if (pos == std::string::npos) {
-        /* Try "repelled a raid" format */
-        pos = event.message.find("'s garrison repelled");
-        if (pos == std::string::npos) return;
-    }
-    std::string name = event.message.substr(0, pos);
-    int sid = find_settlement_by_name(name);
-    if (sid < 0) return;
-
-    const auto& settlement = world_.settlements[sid];
+void CascadeEngine::on_raid_occurred(const RaidOccurred& raid, const Tick& tick) {
+    const auto& settlement = world_.settlements[raid.settlement_id];
 
     /* Fear spreads from raided settlement */
     effects_.push_back({
@@ -52,16 +37,16 @@ void CascadeEngine::on_raid(const WorldEvent& event, const Tick& tick) {
         30,                /* lasts 30 ticks */
         "fear",
         0.8,               /* high intensity */
-        sid
+        raid.settlement_id
     });
 
-    emit(tick, std::format("Fear spreads from {} after the raid", settlement.name));
+    emit(tick, FearSpread{ raid.settlement_id });
 
     /* Refugees flee to nearest safe settlement */
     int nearest_id = -1;
     int nearest_dist = std::numeric_limits<int>::max();
     for (const auto& other : world_.settlements) {
-        if (other.id == sid) continue;
+        if (other.id == raid.settlement_id) continue;
         int d = settlement.coord.distance_to(other.coord);
         if (d < nearest_dist) {
             nearest_dist = d;
@@ -71,12 +56,11 @@ void CascadeEngine::on_raid(const WorldEvent& event, const Tick& tick) {
 
     if (nearest_id >= 0) {
         int refugees = rng_.rand_int(5, settlement.population / 20 + 1);
-        world_.settlements[sid].population = std::max(10,
-            world_.settlements[sid].population - refugees);
+        world_.settlements[raid.settlement_id].population = std::max(10,
+            world_.settlements[raid.settlement_id].population - refugees);
         world_.settlements[nearest_id].population += refugees;
 
-        emit(tick, std::format("{} refugees flee from {} to {}",
-            refugees, settlement.name, world_.settlements[nearest_id].name));
+        emit(tick, RefugeeFlee{ settlement.id, nearest_id, refugees });
 
         /* Refugee arrival creates minor prosperity at destination */
         effects_.push_back({
@@ -90,15 +74,25 @@ void CascadeEngine::on_raid(const WorldEvent& event, const Tick& tick) {
     }
 }
 
-void CascadeEngine::on_starvation(const WorldEvent& event, const Tick& tick) {
-    /* "X is starving! Y people lost" */
-    auto pos = event.message.find(" is starving");
-    if (pos == std::string::npos) return;
-    std::string name = event.message.substr(0, pos);
-    int sid = find_settlement_by_name(name);
-    if (sid < 0) return;
+void CascadeEngine::on_raid_repelled(const RaidRepelled& raid, const Tick& tick) {
+    const auto& settlement = world_.settlements[raid.settlement_id];
+    /* 15% for fear to spreads from raided settlement */
+    if (rng_.rand_bool(0.15)) {
+        effects_.push_back({
+            settlement.coord,
+            5,                /* radius */
+            30,                /* lasts 30 ticks */
+            "fear",
+            0.3,               /* high intensity */
+            raid.settlement_id
+        });
 
-    const auto& settlement = world_.settlements[sid];
+        emit(tick, FearSpread{ raid.settlement_id });
+    }
+}
+
+void CascadeEngine::on_starvation(const Starvation& starvation, const Tick& tick) {
+    const auto& settlement = world_.settlements[starvation.settlement_id];
 
     /* Famine spreads — nearby settlements hoard food */
     effects_.push_back({
@@ -107,14 +101,14 @@ void CascadeEngine::on_starvation(const WorldEvent& event, const Tick& tick) {
         45,                /* famine lasts longer */
         "famine",
         0.6,
-        sid
+        starvation.settlement_id
     });
 
     /* Population migration — people leave starving settlement */
     int nearest_id = -1;
     int nearest_dist = std::numeric_limits<int>::max();
     for (const auto& other : world_.settlements) {
-        if (other.id == sid) continue;
+        if (other.id == starvation.settlement_id) continue;
         if (!other.supply.contains(Resource::Food)) continue;
         if (other.supply.at(Resource::Food) <= 0) continue;
         int d = settlement.coord.distance_to(other.coord);
@@ -126,60 +120,72 @@ void CascadeEngine::on_starvation(const WorldEvent& event, const Tick& tick) {
 
     if (nearest_id >= 0 && nearest_dist <= 15) {
         int migrants = rng_.rand_int(3, settlement.population / 50 + 1);
-        world_.settlements[sid].population = std::max(10,
-            world_.settlements[sid].population - migrants);
+        world_.settlements[starvation.settlement_id].population = std::max(10,
+            world_.settlements[starvation.settlement_id].population - migrants);
         world_.settlements[nearest_id].population += migrants;
 
-        emit(tick, std::format("{} people migrate from starving {} to {}",
-            migrants, settlement.name, world_.settlements[nearest_id].name));
+        emit(tick, MigratedFromStarving{ settlement.id, nearest_id, migrants });
     }
 }
 
-void CascadeEngine::on_war(const WorldEvent& event, const Tick& tick) {
-    /* "WAR! Kingdom_X declares war on Kingdom_Y!" */
+void CascadeEngine::on_war(const WarDeclared& declaration, const Tick& tick) {
     /* Disrupts trade across both kingdoms */
-    for (const auto& kingdom : world_.kingdoms) {
-        if (event.message.find(kingdom.name) != std::string::npos) {
-            effects_.push_back({
-                kingdom.capital,
-                20,
-                90,            /* war effects last a full season */
-                "trade_disruption",
-                1.0,
-                -1
-            });
+    effects_.push_back({
+        world_.kingdoms[declaration.attacker_kingdom].capital,
+        20,
+        90,            /* war effects last a full season */
+        "trade_disruption",
+        1.0,
+        -1
+    });
 
-            /* Border settlements suffer */
-            for (const auto& coord : kingdom.territory) {
-                if (!world_.grid.at(coord).is_border) continue;
-                if (!world_.grid.at(coord).settlement_id.has_value()) continue;
+    effects_.push_back({
+        world_.kingdoms[declaration.defender_kingdom].capital,
+        20,
+        90,            /* war effects last a full season */
+        "trade_disruption",
+        1.0,
+        -1
+    });
 
-                int sid = world_.grid.at(coord).settlement_id.value();
-                effects_.push_back({
-                    coord,
-                    3,
-                    60,
-                    "war_front",
-                    0.9,
-                    sid
-                });
+    /* Border settlements suffer */
+    for (const auto& coord : world_.kingdoms[declaration.attacker_kingdom].territory) {
+        if (!world_.grid.at(coord).is_border) continue;
+        if (!world_.grid.at(coord).settlement_id.has_value()) continue;
 
-                emit(tick, std::format("{} is on the war front!",
-                    world_.settlements[sid].name));
-            }
-        }
+        int sid = world_.grid.at(coord).settlement_id.value();
+        effects_.push_back({
+            coord,
+            3,
+            60,
+            "war_front",
+            0.9,
+            sid
+        });
+
+        emit(tick, WarFront{ sid });
+    }
+
+    for (const auto& coord : world_.kingdoms[declaration.defender_kingdom].territory) {
+        if (!world_.grid.at(coord).is_border) continue;
+        if (!world_.grid.at(coord).settlement_id.has_value()) continue;
+
+        int sid = world_.grid.at(coord).settlement_id.value();
+        effects_.push_back({
+            coord,
+            3,
+            60,
+            "war_front",
+            0.9,
+            sid
+        });
+
+        emit(tick, WarFront{ sid });
     }
 }
 
-void CascadeEngine::on_promotion(const WorldEvent& event, const Tick& tick) {
-    /* "X has grown into a City!" */
-    auto pos = event.message.find(" has grown");
-    if (pos == std::string::npos) return;
-    std::string name = event.message.substr(0, pos);
-    int sid = find_settlement_by_name(name);
-    if (sid < 0) return;
-
-    const auto& settlement = world_.settlements[sid];
+void CascadeEngine::on_promotion(const SettlementPromoted& promotion, const Tick& tick) {
+    const auto& settlement = world_.settlements[promotion.settlement_id];
 
     /* Prosperity radiates outward — nearby settlements benefit */
     effects_.push_back({
@@ -188,20 +194,14 @@ void CascadeEngine::on_promotion(const WorldEvent& event, const Tick& tick) {
         60,
         "prosperity",
         0.7,
-        sid
+        promotion.settlement_id
     });
 
-    emit(tick, std::format("Prosperity radiates from the growing {}", settlement.name));
+    emit(tick, Prosperity{ promotion.settlement_id });
 }
 
-void CascadeEngine::on_storm_damage(const WorldEvent& event, const Tick& tick) {
-    auto pos = event.message.find(" suffered storm damage");
-    if (pos == std::string::npos) return;
-    std::string name = event.message.substr(0, pos);
-    int sid = find_settlement_by_name(name);
-    if (sid < 0) return;
-
-    const auto& settlement = world_.settlements[sid];
+void CascadeEngine::on_storm_damage(const StormDamage& storm, const Tick& tick) {
+    const auto& settlement = world_.settlements[storm.settlement_id];
 
     /* Storm damage accelerates road decay nearby */
     effects_.push_back({
@@ -210,7 +210,7 @@ void CascadeEngine::on_storm_damage(const WorldEvent& event, const Tick& tick) {
         10,
         "storm_aftermath",
         0.5,
-        sid
+        storm.settlement_id
     });
 }
 
@@ -266,8 +266,7 @@ void CascadeEngine::apply(const Tick& tick) {
                 int losses = rng_.rand_int(1, 5);
                 settlement.garrison = std::max(0, settlement.garrison - losses);
                 settlement.population = std::max(10, settlement.population - losses);
-                emit(tick, std::format("{} loses {} soldiers on the war front",
-                    settlement.name, losses));
+                emit(tick, WarLoss{ settlement.id, losses });
             }
         }
     }
@@ -312,19 +311,4 @@ double CascadeEngine::disruption_at(const lwe::hex::Coord& c) const {
         }
     }
     return std::min(total, 1.0);
-}
-
-/* ---------------- Settlement lookup ---------------- */
-int CascadeEngine::find_settlement_by_name(const std::string& name_fragment) const {
-    for (const auto& s : world_.settlements) {
-        if (s.name == name_fragment) return s.id;
-    }
-    // Partial match
-    for (const auto& s : world_.settlements) {
-        if (name_fragment.find(s.name) != std::string::npos ||
-            s.name.find(name_fragment) != std::string::npos) {
-            return s.id;
-        }
-    }
-    return -1;
 }

@@ -1,11 +1,14 @@
 #include "cascade.hpp"
+#include "event.hpp"
+#include "event_describer.hpp"
+#include "types.hpp"
+#include "state_machine.hpp"
 #include "world_gen.hpp"
 #include "common.hpp"
-#include "display/display.hpp"
+#include "display.hpp"
 
 #include <cassert>
 #include <print>
-#include <cmath>
 
 static WorldData make_test_world() {
     WorldConfig cfg;
@@ -58,7 +61,7 @@ void raid_creates_fear_cascade() {
     /* Manually inject a raid event */
     if (sim.world.settlements.empty()) return;
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
 
     sim.cascade.process_events({ raid_event }, tick);
@@ -76,7 +79,7 @@ void starvation_creates_famine_cascade() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent starve_event = { 1, 1, s.name + " is starving! 10 people lost" };
+    WorldEvent starve_event = { Tick{ 1, 1 }, Starvation{ s.id, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
 
     sim.cascade.process_events({ starve_event }, tick);
@@ -93,7 +96,7 @@ void promotion_creates_prosperity() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent promo_event = { 1, 1, s.name + " has grown into a City!" };
+    WorldEvent promo_event = { Tick{ 1, 1 }, SettlementPromoted{ s.id, SettlementType::Town, SettlementType::City } };
     Tick tick = { 1, 1, Season::Spring, 1 };
 
     sim.cascade.process_events({ promo_event }, tick);
@@ -110,14 +113,13 @@ void effects_decay_over_time() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
     int initial_count = sim.cascade.active_effects().size();
     assert(initial_count > 0);
 
-    // Run many ticks — effects should eventually expire
     for (int d = 2; d <= 100; ++d) {
         Tick t = { d, 1, Season::Spring, d };
         sim.cascade.update(t);
@@ -132,7 +134,7 @@ void effects_expire_completely() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
@@ -150,7 +152,7 @@ void fear_intensity_decreases_with_distance() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
@@ -165,7 +167,7 @@ void fear_zero_outside_radius() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
@@ -183,7 +185,7 @@ void refugees_transfer_population() {
     for (const auto& s : sim.world.settlements) pop_total += s.population;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
@@ -201,7 +203,7 @@ void cascade_generates_events() {
     if (sim.world.settlements.empty()) return;
 
     const auto& s = sim.world.settlements[0];
-    WorldEvent raid_event = { 1, 1, s.name + " was raided by goblins! 5 casualties, 10 food stolen" };
+    WorldEvent raid_event = { Tick{ 1, 1 }, RaidOccurred{ s.id, 0, POIType::GoblinWarren, 5, 10 } };
     Tick tick = { 1, 1, Season::Spring, 1 };
     sim.cascade.process_events({ raid_event }, tick);
 
@@ -277,7 +279,7 @@ void run_demo() {
 
         /* Print state machine events */
         for (const auto& ev : state.events()) {
-            std::print("  \033[33m[Y{} D{}]\033[0m {}\n", ev.tick_year, ev.tick_day, ev.message);
+            std::print("{}\n", describe(ev, world));
             total_state_events++;
         }
 
@@ -287,7 +289,7 @@ void run_demo() {
 
         /* Print cascade events */
         for (const auto& ev : cascade.events()) {
-            std::print("  \033[36m[Y{} D{} CASCADE]\033[0m {}\n", ev.tick_year, ev.tick_day, ev.message);
+            std::print("{}\n", describe(ev, world));
             total_cascade_events++;
         }
 

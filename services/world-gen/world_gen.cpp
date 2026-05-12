@@ -1,6 +1,6 @@
 #include "world_gen.hpp"
-#include "noise/fbm.hpp"
-#include "hex/algorithms.hpp"
+#include "fbm.hpp"
+#include "algorithms.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -581,13 +581,6 @@ void WorldGenerator::assign_kingdoms() {
     for (int i = 0; i < num_kingdoms; ++i) {
         capitals.push_back(world_.settlements[sorted_ids[i]].coord);
     }
-
-    // for (int i = 0; i < num_kingdoms; ++i) {
-    //     auto& hex = world_.grid.at(capitals[i]);
-    //     std::print("Kingdom {} capital at ({},{}) biome={} terrain={}\n",
-    //         i, capitals[i].q, capitals[i].r,
-    //         static_cast<int>(hex.biome), static_cast<int>(hex.terrain));
-    // }
 
     auto partition = lwe::hex::voronoi_partition(capitals,
         [this](const lwe::hex::Coord& c) {

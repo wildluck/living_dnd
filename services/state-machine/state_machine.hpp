@@ -1,17 +1,12 @@
 #pragma once
 
-#include "common/world_data.hpp"
+#include "world_data.hpp"
+#include "event.hpp"
+#include "dice.hpp"
 #include "weather_engine.hpp"
 #include "world_clock.hpp"
 
-#include <string>
 #include <vector>
-
-struct WorldEvent {
-    int tick_day;
-    int tick_year;
-    std::string message;
-};
 
 class StateMachine {
 public:
@@ -28,7 +23,7 @@ private:
     RNG rng_;
     std::vector<WorldEvent> events_;
 
-    void emit(const Tick& tick, const std::string& msg);
+    void emit(const Tick& tick, const EventPayload& payload);
 
     void update_settlements(const Tick& tick);
     void update_kingdoms(const Tick& tick);

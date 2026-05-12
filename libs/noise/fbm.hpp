@@ -1,6 +1,6 @@
 #pragma once
 
-#include "noise/simplex.hpp"
+#include "simplex.hpp"
 
 namespace lwe::noise {
 

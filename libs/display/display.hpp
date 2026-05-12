@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/types.hpp"
-#include "common/world_data.hpp"
-#include "hex/coord.hpp"
+#include "types.hpp"
+#include "world_data.hpp"
+#include "coord.hpp"
 #include "weather_engine.hpp"
 #include "effect_resolver.hpp"
 

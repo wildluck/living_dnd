@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hex/coord.hpp"
+#include "coord.hpp"
 
 #include <algorithm>
 #include <climits>
